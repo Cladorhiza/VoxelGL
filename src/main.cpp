@@ -7,6 +7,7 @@
 #include "GLFW/glfw3.h"
 //my headers
 #include "InputManager.h"
+#include "Shader.h"
 
 //globals
 GLFWwindow* g_window{nullptr};
@@ -73,7 +74,6 @@ int Init() {
 	}
 
 	InputManager::Init(g_window);
-
     return 1;
 }
 
@@ -83,40 +83,51 @@ int main() {
 	    std::cout << "Initialization failed! rip." << std::endl;
         return -1;
     }
+    else {
+	    std::cout << "Initialization successful!" << std::endl;
+    }
 
-	bool bIsBufferA = true;
+    Shader shader("res/shaders/BasicShader.txt");
+    shader.Bind();
+
+    std::vector<float> vertexes {
+	  0.0f, 0.75f, 0.0f,
+	  0.5f, 0.0f, 0.0f,
+	  -0.5f, 0.0f, 0.0f
+    };
+
+    std::vector<float> colours {
+	  1.0f, 1.0f, 0.0f,  
+	  0.0f, 1.0f, 1.0f,  
+	  1.0f, 0.0f, 1.0f
+    };
+
+    std::vector<unsigned> indexes {
+	    0,1,2
+    };
+
+    uint32_t vao = buildVAOfromData(vertexes, colours, indexes);
+	glBindBuffer(GL_VERTEX_ARRAY, vao);
+
 	/* Loop until the user closes the g_window */
     while (!glfwWindowShouldClose(g_window))
     {
-        /* Render here */
+        //Rendering
         glClear(GL_COLOR_BUFFER_BIT);
 
-
-        if (bIsBufferA)
-        {
-	        
-            glBegin(GL_TRIANGLES);
-	        glVertex3f(0.0f, 0.75f, 0.0f);
-	        glVertex3f(0.5f, 0.0f, 0.0f);
-	        glVertex3f(-0.5f, 0.0f, 0.0f);
-	        glEnd();
-        }
-        else
-        {
-	        glBegin(GL_TRIANGLES);
-	        glVertex3f(0.0f, -0.75f, 0.0f);
-	        glVertex3f(0.5f, 0.0f, 0.0f);
-	        glVertex3f(-0.5f, 0.0f, 0.0f);
-	        glEnd();
-        }
-        
-        bIsBufferA = !bIsBufferA;
+    	glDrawArrays(GL_TRIANGLES, 0, 3);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(g_window);
 
         /* Poll for and process events */
         glfwPollEvents();
+        //Update inputs
+        InputManager::Poll(g_window);
+
+        if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+	        break;
+        }
     }
 
     glfwTerminate();
