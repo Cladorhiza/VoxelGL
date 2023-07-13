@@ -5,8 +5,8 @@ layout(location = 1) in vec3 in_Color;
 
 out vec3 ex_Color;
 
-//uniform mat4 projectionMatrix;
-//uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
 
 
 
@@ -15,8 +15,8 @@ void main()
 	//vec3 lightPosition = vec3(100.f, 100.f, 0.f);
 	
 
-	//gl_Position = projectionMatrix * viewMatrix * vec4(in_Position, 1.0);
-	gl_Position = vec4(in_Position, 1.0);
+	gl_Position = projectionMatrix * viewMatrix * vec4(in_Position, 1.0);
+
 	ex_Color = in_Color;
 
 };
