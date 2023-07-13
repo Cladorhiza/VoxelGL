@@ -19,12 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\MarchingCubes.cpp" />
+    <ClCompile Include="src\GLUtil.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\MarchingCubes.h" />
+    <ClInclude Include="src\GLUtil.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Shader.h" />

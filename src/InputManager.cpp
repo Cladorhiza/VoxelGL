@@ -54,7 +54,7 @@ namespace InputManager{
 	int GetKeyState(const int GLFWKeyCode) {
 		return keys[GLFWKeyCode];
 	}
-	int GetKeyToggle(int GLFWKeyCode) {
+	bool GetKeyToggle(int GLFWKeyCode) {
 		return keyToggle[GLFWKeyCode];
 	}
 	double GetMouseX() { return cursorXPos; }
