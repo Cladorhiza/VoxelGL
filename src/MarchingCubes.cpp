@@ -24,7 +24,7 @@ void MarchingCubes::MarchCube(std::vector<glm::vec3>& outVertexes, std::array<fl
 		outVertexes.emplace_back(edgeVertexes[tris[i]][0],edgeVertexes[tris[i]][1] ,edgeVertexes[tris[i]][2]);
 	}
 }
-
+//TODO: Remove duplicate vertexes, map? or cache border indexes while looping over them
 std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<std::vector<float>>>& gridValues, float surfaceValue) {
 
 	std::vector<glm::vec3> vertexes;

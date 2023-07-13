@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dependencies\FastNoise-master\FastNoise.cpp" />
     <ClCompile Include="src\MarchingCubes.cpp" />
     <ClCompile Include="src\GLUtil.cpp" />
     <ClCompile Include="src\Camera.cpp" />
@@ -120,7 +121,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);GLEW_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\glfw-3.3.8.bin.WIN64\include;$(SolutionDir)dependencies\glew-2.1.0\include;$(SolutionDir)dependencies\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\glfw-3.3.8.bin.WIN64\include;$(SolutionDir)dependencies\glew-2.1.0\include;$(SolutionDir)dependencies\glm;$(SolutionDir)dependencies\FastNoise-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -138,7 +139,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);GLEW_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\glfw-3.3.8.bin.WIN64\include;$(SolutionDir)dependencies\glew-2.1.0\include;$(SolutionDir)dependencies\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\glfw-3.3.8.bin.WIN64\include;$(SolutionDir)dependencies\glew-2.1.0\include;$(SolutionDir)dependencies\glm;$(SolutionDir)dependencies\FastNoise-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

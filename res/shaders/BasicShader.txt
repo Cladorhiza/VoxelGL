@@ -12,12 +12,16 @@ uniform mat4 viewMatrix;
 
 void main()
 {
-	//vec3 lightPosition = vec3(100.f, 100.f, 0.f);
+	vec3 diffuseLightPosition = vec3(100.f, 100.f, 0.f);
+	vec3 ambientLightColour = vec3(0.6f, 0.6f, 0.6f);
 	
+	vec3 lightToVert = in_Position * diffuseLightPosition;
+
+	//float dotProduct = dot(lightToVert)
 
 	gl_Position = projectionMatrix * viewMatrix * vec4(in_Position, 1.0);
 
-	ex_Color = in_Color;
+	ex_Color = ambientLightColour * in_Color;
 
 };
 

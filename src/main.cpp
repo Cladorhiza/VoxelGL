@@ -17,15 +17,12 @@
 #include "Camera.h"
 #include "GLUtil.h"
 #include "MarchingCubes.h"
+#include "FastNoise.h"
 //globals
 GLFWwindow* g_window{nullptr};
 
 glm::mat4 projection{glm::perspective(45.0f, 16.0f/9.0f,0.01f,1000.0f)};
 glm::mat4 view{Camera::GetViewMatrix()};
-
-float getfunc(int x, int y, int z) {
-	return x*x + y*y + z*z;
-}
 
 int Init() {
 
@@ -69,9 +66,15 @@ int main() {
 	shader.SetUniformMat4f("projectionMatrix", projection);
 	shader.SetUniformMat4f("viewMatrix", view);
 
+    FastNoise fn;
+    fn.SetNoiseType(FastNoise::PerlinFractal);
+
+
+
+
     std::vector<std::vector<std::vector<float>>> cubeData;
 
-	constexpr uint32_t gridCount{40};
+	constexpr uint32_t gridCount{100};
 	time_t t;
 	srand(static_cast<unsigned>(time(&t)));
 
@@ -80,13 +83,13 @@ int main() {
 	    for (int j{0}; j < gridCount; ++j) {
 			cubeData[i].emplace_back();
             for (int k{0}; k < gridCount; ++k) {
-                cubeData[i][j].push_back(getfunc(i,j,k));
+                cubeData[i][j].push_back(fn.GetNoise(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
 
             }
 	    }
     }
 
-	float surfaceLevel = 1600;
+    float surfaceLevel = 0.0f;
 
 	std::vector<glm::vec3> marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel);
 
@@ -95,16 +98,16 @@ int main() {
 
 	for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
 
-		marchingIndexes.push_back(i);
-		marchingIndexes.push_back(i+1);
-		marchingIndexes.push_back(i+2);
-		marchingColours.emplace_back(1.0f, 0.0f, 0.0f);
-		marchingColours.emplace_back(0.0f, 1.0f, 0.0f);
-		marchingColours.emplace_back(0.0f, 0.0f, 1.0f);
+		marchingIndexes.push_back(static_cast<unsigned>(i));
+		marchingIndexes.push_back(static_cast<unsigned>(i)+1);
+		marchingIndexes.push_back(static_cast<unsigned>(i)+2);
+		marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+		marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+		marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
 	}
 
 	uint32_t vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes);
-    
+
 	/* Loop until the user closes the g_window */
     while (!glfwWindowShouldClose(g_window))
     {
@@ -114,7 +117,7 @@ int main() {
 		shader.SetUniformMat4f("viewMatrix",Camera::GetViewMatrix());
 
 		glBindVertexArray(vaoMarch);
-    	glDrawElements(GL_TRIANGLES, marchingIndexes.size(), GL_UNSIGNED_INT, nullptr);
+    	glDrawElements(GL_TRIANGLES, static_cast<unsigned>(marchingIndexes.size()), GL_UNSIGNED_INT, nullptr);
 		glBindVertexArray(0);
         /* Swap front and back buffers */
         glfwSwapBuffers(g_window);
@@ -127,17 +130,46 @@ int main() {
         if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 	        break;
         }
-    	if (InputManager::GetKeyToggle(GLFW_KEY_A) && InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
-	        surfaceLevel += 10.0f;
+    	if (InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
+	        surfaceLevel += 0.01f;
+            std::cout << surfaceLevel << '\n';
+            marchingVertexes.clear();
             marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel);
             glDeleteVertexArrays(1, &vaoMarch);
             vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes);
+
+            marchingColours.clear();
+            marchingIndexes.clear();
+            for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
+
+				marchingIndexes.push_back(static_cast<unsigned>(i));
+				marchingIndexes.push_back(static_cast<unsigned>(i)+1);
+				marchingIndexes.push_back(static_cast<unsigned>(i)+2);
+				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+			}
         }
-    	if (InputManager::GetKeyToggle(GLFW_KEY_D) && InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
-	        surfaceLevel -= 10.0f;
+    	if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
+	        surfaceLevel -= 0.01f;
+            std::cout << surfaceLevel << '\n';
+            marchingVertexes.clear();
             marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel);
             glDeleteVertexArrays(1, &vaoMarch);
             vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes);
+
+            marchingColours.clear();
+            marchingIndexes.clear();
+            for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
+
+				marchingIndexes.push_back(static_cast<unsigned>(i));
+				marchingIndexes.push_back(static_cast<unsigned>(i)+1);
+				marchingIndexes.push_back(static_cast<unsigned>(i)+2);
+				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+			}
+
         }
 		Camera::Update();
     }
