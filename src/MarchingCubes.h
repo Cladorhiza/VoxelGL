@@ -5,9 +5,9 @@
 namespace MarchingCubes
 {
 
-	void MarchCube(std::vector<glm::vec3>& outVertexes, std::array<float,8>& cubeData, float surfaceValue);
+	void MarchCube(std::vector<glm::vec3>& outVertexes, std::array<float,8>& cubeData, float surfaceValue, std::vector<glm::vec3>& outNormals);
 
-	std::vector<glm::vec3> MarchCubes(const std::vector<std::vector<std::vector<float>>>& gridValues, float surfaceValue);
+	std::vector<glm::vec3> MarchCubes(const std::vector<std::vector<std::vector<float>>>& gridValues, float surfaceValue, std::vector<glm::vec3>& outNormals);
 
 
 	inline constexpr int edgeTable[256] =

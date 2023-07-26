@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\FileUtil.cpp" />
+    <ClCompile Include="src\ComputeShader.cpp" />
     <ClCompile Include="dependencies\FastNoise-master\FastNoise.cpp" />
     <ClCompile Include="src\MarchingCubes.cpp" />
     <ClCompile Include="src\GLUtil.cpp" />
@@ -28,6 +30,8 @@
     <ClCompile Include="src\Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\FileUtil.h" />
+    <ClInclude Include="src\ComputeShader.h" />
     <ClInclude Include="src\MarchingCubes.h" />
     <ClInclude Include="src\GLUtil.h" />
     <ClInclude Include="src\Camera.h" />

@@ -18,6 +18,8 @@
 #include "GLUtil.h"
 #include "MarchingCubes.h"
 #include "FastNoise.h"
+#include "ComputeShader.h"
+
 //globals
 GLFWwindow* g_window{nullptr};
 
@@ -52,14 +54,29 @@ int Init() {
     return 1;
 }
 
-int main() {
+float sphereFunc(float x, float y, float z) {
+	return x * x + y * y + z * z;
+}
 
-    if (Init() < 0) {
-	    std::cout << "Initialization failed! rip." << std::endl;
+int cubeMarch() {
+	if (Init() < 0) {
+	    std::cout << "Initialization failed! rip." << '\n';
         return -1;
     }
-	std::cout << "Initialization successful!" << std::endl;
-    
+	std::cout << "Initialization successful!" << '\n';
+    int numAttributes = 0;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
+    std::cout << "Max vertex attributes: " << numAttributes << '\n';
+
+    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
+    std::cout << "Max uniform locations: " << numAttributes << '\n';
+
+    glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
+    std::cout << "GL version: " << numAttributes << '.';
+    glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
+    std::cout << numAttributes << '\n';
+
+
 
     Shader shader("res/shaders/BasicShader.txt");
     shader.Bind();
@@ -71,10 +88,9 @@ int main() {
 
 
 
-
     std::vector<std::vector<std::vector<float>>> cubeData;
 
-	constexpr uint32_t gridCount{100};
+	constexpr uint32_t gridCount{50};
 	time_t t;
 	srand(static_cast<unsigned>(time(&t)));
 
@@ -83,15 +99,17 @@ int main() {
 	    for (int j{0}; j < gridCount; ++j) {
 			cubeData[i].emplace_back();
             for (int k{0}; k < gridCount; ++k) {
-                cubeData[i][j].push_back(fn.GetNoise(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
+                //cubeData[i][j].push_back(fn.GetNoise(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
+                cubeData[i][j].push_back(sphereFunc(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
 
             }
 	    }
     }
 
-    float surfaceLevel = 0.0f;
+    float surfaceLevel = 3000.0f;
 
-	std::vector<glm::vec3> marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel);
+	std::vector<glm::vec3> marchingNormals;
+	std::vector<glm::vec3> marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
 
 	std::vector<unsigned> marchingIndexes;
 	std::vector<glm::vec3> marchingColours;
@@ -101,12 +119,15 @@ int main() {
 		marchingIndexes.push_back(static_cast<unsigned>(i));
 		marchingIndexes.push_back(static_cast<unsigned>(i)+1);
 		marchingIndexes.push_back(static_cast<unsigned>(i)+2);
-		marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
-		marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
-		marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
 	}
 
-	uint32_t vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes);
+	uint32_t vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
 	/* Loop until the user closes the g_window */
     while (!glfwWindowShouldClose(g_window))
@@ -134,9 +155,9 @@ int main() {
 	        surfaceLevel += 0.01f;
             std::cout << surfaceLevel << '\n';
             marchingVertexes.clear();
-            marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel);
+            marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
             glDeleteVertexArrays(1, &vaoMarch);
-            vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes);
+            vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
 
             marchingColours.clear();
             marchingIndexes.clear();
@@ -145,18 +166,18 @@ int main() {
 				marchingIndexes.push_back(static_cast<unsigned>(i));
 				marchingIndexes.push_back(static_cast<unsigned>(i)+1);
 				marchingIndexes.push_back(static_cast<unsigned>(i)+2);
-				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
-				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
-				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
 			}
         }
     	if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
 	        surfaceLevel -= 0.01f;
             std::cout << surfaceLevel << '\n';
             marchingVertexes.clear();
-            marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel);
+            marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
             glDeleteVertexArrays(1, &vaoMarch);
-            vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes);
+            vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
 
             marchingColours.clear();
             marchingIndexes.clear();
@@ -165,11 +186,128 @@ int main() {
 				marchingIndexes.push_back(static_cast<unsigned>(i));
 				marchingIndexes.push_back(static_cast<unsigned>(i)+1);
 				marchingIndexes.push_back(static_cast<unsigned>(i)+2);
-				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
-				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
-				marchingColours.emplace_back(0.8f, 0.6f, 0.1f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
 			}
 
+        }
+		Camera::Update();
+    }
+
+    glfwTerminate();
+    return 0;
+
+    
+}
+
+int main() {
+
+    if (Init() < 0) {
+	    std::cout << "Initialization failed! rip." << '\n';
+        return -1;
+    }
+
+	std::cout << "Initialization successful!" << '\n';
+    int numAttributes = 0;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
+    std::cout << "Max vertex attributes: " << numAttributes << '\n';
+
+    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
+    std::cout << "Max uniform locations: " << numAttributes << '\n';
+
+    glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
+    std::cout << "GL version: " << numAttributes << '.';
+    glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
+    std::cout << numAttributes << '\n';
+
+    int computeCount[3]{0,0,0};
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, computeCount);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, computeCount+1);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, computeCount+2);
+    std::cout << "max X compute: " << computeCount[0] <<
+		        ".max Y compute: " << computeCount[1] <<
+		        ".max Z compute: " << computeCount[2] << '\n';
+
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &numAttributes);
+    std::cout << "max shader dispatch count: " << numAttributes << '\n';
+
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_SIZE , &numAttributes);
+    std::cout << "max work group size: " << numAttributes << '\n';
+
+    std::vector<glm::vec3> vertexes {
+        {-0.5f, 0.5f, 0.0f},
+        { 0.5f, 0.5f, 0.0f},
+        { 0.5f,-0.5f, 0.0f},
+        { 0.5f,-0.5f, 0.0f},
+        {-0.5f,-0.5f, 0.0f},
+        {-0.5f, 0.5f, 0.0f}
+    };
+
+    std::vector<glm::vec2> texCoords {
+        {0.0f, 0.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f},
+        {1.0f, 1.0f},
+        {0.0f, 1.0f},
+        {0.0f, 0.0f}
+    };
+
+    unsigned int texturedQuad = GLUtil::BuildVAOfromData(vertexes, texCoords);
+
+    const ComputeShader shader("res/shaders/ComputeShader.txt");
+    const Shader texShader("res/shaders/TextureShader.txt");
+
+    // texture size
+	const unsigned int TEXTURE_WIDTH = 512, TEXTURE_HEIGHT = 512;
+	unsigned int texture;
+
+	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, 
+	             GL_FLOAT, NULL);
+
+	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+
+
+	/* Loop until the user closes the g_window */
+    while (!glfwWindowShouldClose(g_window))
+    {
+        //Rendering
+        glClear(GL_COLOR_BUFFER_BIT);
+
+	        
+	    shader.Bind();
+	    glDispatchCompute(static_cast<unsigned int>(TEXTURE_WIDTH), static_cast<unsigned int>(TEXTURE_HEIGHT), 1);
+        shader.Unbind();
+
+        // make sure writing to image has finished before read
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+        texShader.Bind();
+        glBindVertexArray(texturedQuad);
+    	glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+        texShader.Unbind();
+
+        /* Swap front and back buffers */
+        glfwSwapBuffers(g_window);
+
+        /* Poll for and process events */
+        glfwPollEvents();
+        //Update inputs
+        InputManager::Poll(g_window);
+
+        if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+	        break;
         }
 		Camera::Update();
     }

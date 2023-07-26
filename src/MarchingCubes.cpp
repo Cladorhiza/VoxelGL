@@ -2,9 +2,12 @@
 
 #include <vector>
 #include <array>
-#include "vec3.hpp"
+#include <iostream>
 
-void MarchingCubes::MarchCube(std::vector<glm::vec3>& outVertexes, std::array<float,8>& cubeData, float surfaceValue) {
+#include "vec3.hpp"
+#include "glm.hpp"
+
+void MarchingCubes::MarchCube(std::vector<glm::vec3>& outVertexes, std::array<float,8>& cubeData, float surfaceValue, std::vector<glm::vec3>& outNormals) {
 
 	int16_t vertexesBelowSurface{0};
 
@@ -16,16 +19,27 @@ void MarchingCubes::MarchCube(std::vector<glm::vec3>& outVertexes, std::array<fl
 
 	const int* tris = triTable[vertexesBelowSurface];
 
-	for (int16_t i{0}; i < 16; ++i) {
-		//end of vertexes TODO: could loop in 3's to prevent incomplete triangles being pushed (should never happen but who knows))
+	for (int16_t i{0}; i+2 < 16; i+=3) {
+		//if -1, end of vertexes
 		if (tris[i] == -1){
 			break;
 		}
+
 		outVertexes.emplace_back(edgeVertexes[tris[i]][0],edgeVertexes[tris[i]][1] ,edgeVertexes[tris[i]][2]);
+		outVertexes.emplace_back(edgeVertexes[tris[i+1]][0],edgeVertexes[tris[i+1]][1] ,edgeVertexes[tris[i+1]][2]);
+		outVertexes.emplace_back(edgeVertexes[tris[i+2]][0],edgeVertexes[tris[i+2]][1] ,edgeVertexes[tris[i+2]][2]);
+		glm::vec3 norm1{outVertexes[outVertexes.size()-2] - outVertexes[outVertexes.size()-3]};
+		glm::vec3 norm2{outVertexes[outVertexes.size()-1] - outVertexes[outVertexes.size()-2]};
+		glm::vec3 normal{glm::cross(norm1, norm2)};
+		normal = glm::normalize(normal);
+		//std::cout << "X: " << normal.x << " Y: " << normal.y << " Z: " << normal.z << '\n';
+		outNormals.emplace_back(normal);
+		outNormals.emplace_back(normal);
+		outNormals.emplace_back(normal);
 	}
 }
 //TODO: Remove duplicate vertexes, map? or cache border indexes while looping over them
-std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<std::vector<float>>>& gridValues, float surfaceValue) {
+std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<std::vector<float>>>& gridValues, float surfaceValue, std::vector<glm::vec3>& outNormals) {
 
 	std::vector<glm::vec3> vertexes;
 
@@ -45,7 +59,7 @@ std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<s
 
 				size_t oldVecSize{vertexes.size()};
 
-				MarchCube(vertexes, cubeVals, surfaceValue);
+				MarchCube(vertexes, cubeVals, surfaceValue, outNormals);
 
 				size_t vecSizeDifference {vertexes.size() - oldVecSize};
 

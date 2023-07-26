@@ -16,7 +16,11 @@ struct ShaderProgramSource {
 class Shader {
 private:
 	std::string filePath;
+
+	//OpenGL Shader ID
 	unsigned int rendererID;
+
+	//Maps names to uniform locations, used to speed up SetUniforms
 	std::unordered_map<std::string, int> m_UniformLocationCache;
 public:
 	Shader(const std::string& filepath);
@@ -32,9 +36,12 @@ public:
 	void SetUniformvec3f(const std::string& name, float v0, float v1, float v2);
 	void SetUniform1i(const std::string& name, int vi);
 	void SetUniform1f(const std::string& name, float f);
+
+
+	//Helpers which setup shaders from source to openGL object
+	static ShaderProgramSource ParseShader(const std::string& filepath);
+	static unsigned int CompileShader(unsigned int type, const std::string& source);
+	static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader);
 private:
-	unsigned int CompileShader(unsigned int type, const std::string& source);
-	unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader);
-	ShaderProgramSource ParseShader(const std::string& filepath);
 	int GetUniformLocation(const std::string& name);
 };
