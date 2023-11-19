@@ -28,6 +28,7 @@
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\Stopwatch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\FileUtil.h" />
@@ -37,6 +38,7 @@
     <ClInclude Include="inc\Camera.h" />
     <ClInclude Include="inc\InputManager.h" />
     <ClInclude Include="inc\Shader.h" />
+    <ClInclude Include="inc\Stopwatch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -10,8 +10,8 @@
 #include "GLFW/glfw3.h"
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
-//my headers
 
+//my headers
 #include "InputManager.h"
 #include "Shader.h"
 #include "Camera.h"
@@ -19,6 +19,7 @@
 #include "MarchingCubes.h"
 #include "FastNoise.h"
 #include "ComputeShader.h"
+#include "Stopwatch.h"
 
 //globals
 GLFWwindow* g_window{nullptr};
@@ -280,19 +281,24 @@ int main() {
 	float lastFrame { 0.0f };
 	int fCounter { 0 };
 
+	Stopwatch stopwatch;
+
 	//* Loop until the user closes the g_window */
 	while (!glfwWindowShouldClose(g_window))
 	{
 	    //Rendering
 	    glClear(GL_COLOR_BUFFER_BIT);
 
-	        
+	    stopwatch.Restart();
+
 	    shader.Bind();
 	    glDispatchCompute(TEXTURE_WIDTH/25, TEXTURE_HEIGHT/25, 1);
 	    shader.Unbind();
 
 	    // make sure writing to image has finished before read
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		
+		std::cout << stopwatch << "\n";
 
 	    glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -320,15 +326,16 @@ int main() {
 		shader.Bind();
 		shader.SetUniform1f("t", currentFrame);
 		shader.Unbind();
-		deltaTime += currentFrame - lastFrame;
-		lastFrame = currentFrame;
-		if(fCounter > 1000) {
-			std::cout << "FPS: " << 1000 / deltaTime << std::endl;
-			fCounter = 0;
-			deltaTime = 0;
-		} else {
-			fCounter++;
-		}
+		
+		//deltaTime += currentFrame - lastFrame;
+		//lastFrame = currentFrame;
+		//if(fCounter > 1000) {
+		//	std::cout << "FPS: " << 1000 / deltaTime << std::endl;
+		//	fCounter = 0;
+		//	deltaTime = 0;
+		//} else {
+		//	fCounter++;
+		//}
 	}
 
 	glfwTerminate();
