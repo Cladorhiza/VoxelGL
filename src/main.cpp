@@ -28,7 +28,8 @@ constexpr uint32_t HEIGHT { 1000 };
 constexpr float CLIP_NEAR {0.01f};
 constexpr float CLIP_FAR {1000.f};
 constexpr float VFOV { 70.0f };
-constexpr uint32_t CHUNK_SIZE { 50 };
+constexpr uint32_t CHUNK_SIZE { 32 };
+constexpr float SURFACE_LEVEL = 1000.0f;
 
 int Init() {
 
@@ -73,6 +74,7 @@ int cubeMarch() {
 
 	glm::mat4 projection{ glm::perspective(VFOV, static_cast<float>(WIDTH)/HEIGHT, CLIP_NEAR, CLIP_FAR) };
 	glm::mat4 view{Camera::GetViewMatrix()};
+	float surfaceLevel = SURFACE_LEVEL;
 
     Shader shader("res/shaders/BasicShader.txt");
     shader.Bind();
@@ -98,8 +100,6 @@ int cubeMarch() {
             }
 	    }
     }
-
-    float surfaceLevel = 3000.0f;
 
 	std::vector<glm::vec3> marchingNormals;
 	std::vector<unsigned>  marchingIndexes;
@@ -162,13 +162,10 @@ int cubeMarch() {
         
         /* Swap front and back buffers */
         glfwSwapBuffers(g_window);
-
     }
 
     glfwTerminate();
     return 0;
-
-    
 }
 
 int ComputeTest(){
