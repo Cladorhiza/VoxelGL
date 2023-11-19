@@ -23,9 +23,12 @@
 
 //globals
 GLFWwindow* g_window{nullptr};
-
-glm::mat4 projection{glm::perspective(45.0f, 16.0f/9.0f,0.01f,1000.0f)};
-glm::mat4 view{Camera::GetViewMatrix()};
+constexpr uint32_t WIDTH { 1000 };
+constexpr uint32_t HEIGHT { 1000 };
+constexpr float CLIP_NEAR {0.01f};
+constexpr float CLIP_FAR {1000.f};
+constexpr float VFOV { 70.0f };
+constexpr uint32_t CHUNK_SIZE { 50 };
 
 int Init() {
 
@@ -37,7 +40,7 @@ int Init() {
     }
 
     /* Create a windowed mode g_window and its OpenGL context */
-    g_window = glfwCreateWindow(1000, 1000, "marching cubes", NULL, NULL);
+    g_window = glfwCreateWindow(WIDTH, HEIGHT, "marching cubes", NULL, NULL);
 
 	if (!g_window) {
         glfwTerminate();
@@ -67,19 +70,9 @@ int cubeMarch() {
         return -1;
     }
 	std::cout << "Initialization successful!" << '\n';
-    int numAttributes = 0;
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
-    std::cout << "Max vertex attributes: " << numAttributes << '\n';
 
-    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
-    std::cout << "Max uniform locations: " << numAttributes << '\n';
-
-    glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
-    std::cout << "GL version: " << numAttributes << '.';
-    glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
-    std::cout << numAttributes << '\n';
-
-
+	glm::mat4 projection{ glm::perspective(VFOV, static_cast<float>(WIDTH)/HEIGHT, CLIP_NEAR, CLIP_FAR) };
+	glm::mat4 view{Camera::GetViewMatrix()};
 
     Shader shader("res/shaders/BasicShader.txt");
     shader.Bind();
@@ -89,19 +82,16 @@ int cubeMarch() {
     FastNoise fn;
     fn.SetNoiseType(FastNoise::PerlinFractal);
 
-
-
     std::vector<std::vector<std::vector<float>>> cubeData;
 
-	constexpr uint32_t gridCount{50};
-	time_t t;
-	srand(static_cast<unsigned>(time(&t)));
+	//time_t t;
+	//srand(static_cast<unsigned>(time(&t)));
 
-    for (int i{0}; i < gridCount; ++i) {
+    for (int i{0}; i < CHUNK_SIZE; ++i) {
         cubeData.emplace_back();
-	    for (int j{0}; j < gridCount; ++j) {
+	    for (int j{0}; j < CHUNK_SIZE; ++j) {
 			cubeData[i].emplace_back();
-            for (int k{0}; k < gridCount; ++k) {
+            for (int k{0}; k < CHUNK_SIZE; ++k) {
                 //cubeData[i][j].push_back(fn.GetNoise(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
                 cubeData[i][j].push_back(sphereFunc(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
 
@@ -112,19 +102,17 @@ int cubeMarch() {
     float surfaceLevel = 3000.0f;
 
 	std::vector<glm::vec3> marchingNormals;
+	std::vector<unsigned>  marchingIndexes;
+	std::vector<glm::vec3> marchingColours;
 	std::vector<glm::vec3> marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
 
-	std::vector<unsigned> marchingIndexes;
-	std::vector<glm::vec3> marchingColours;
-
 	for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
-
-		marchingIndexes.push_back(static_cast<unsigned>(i));
-		marchingIndexes.push_back(static_cast<unsigned>(i)+1);
-		marchingIndexes.push_back(static_cast<unsigned>(i)+2);
 		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
 		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
 		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+		marchingIndexes.emplace_back(i);
+		marchingIndexes.emplace_back(i+1);
+		marchingIndexes.emplace_back(i+2);
 	}
 
 	uint32_t vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
@@ -141,46 +129,25 @@ int cubeMarch() {
         if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 	        break;
         }
+		//regenerate chunk with increased surface level
     	if (InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
 	        surfaceLevel += 1.f;
             std::cout << surfaceLevel << '\n';
+
             marchingVertexes.clear();
-            marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
+			marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
             glDeleteVertexArrays(1, &vaoMarch);
             vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
-
-            marchingColours.clear();
-            marchingIndexes.clear();
-            for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
-
-				marchingIndexes.push_back(static_cast<unsigned>(i));
-				marchingIndexes.push_back(static_cast<unsigned>(i)+1);
-				marchingIndexes.push_back(static_cast<unsigned>(i)+2);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-			}
         }
+		//regenerate chunk with decreased surface level
     	if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
 	        surfaceLevel -= 1.f;
             std::cout << surfaceLevel << '\n';
+
             marchingVertexes.clear();
             marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
             glDeleteVertexArrays(1, &vaoMarch);
             vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
-
-            marchingColours.clear();
-            marchingIndexes.clear();
-            for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
-
-				marchingIndexes.push_back(static_cast<unsigned>(i));
-				marchingIndexes.push_back(static_cast<unsigned>(i)+1);
-				marchingIndexes.push_back(static_cast<unsigned>(i)+2);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-			}
-
         }
 		Camera::Update();
 
@@ -204,39 +171,13 @@ int cubeMarch() {
     
 }
 
-int main() {
-
+int ComputeTest(){
+    
 	if (Init() < 0) {
 	    std::cout << "Initialization failed! rip." << '\n';
 	    return -1;
 	}
-
 	std::cout << "Initialization successful!" << '\n';
-	int numAttributes = 0;
-	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
-	std::cout << "Max vertex attributes: " << numAttributes << '\n';
-
-	glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
-	std::cout << "Max uniform locations: " << numAttributes << '\n';
-
-	glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
-	std::cout << "GL version: " << numAttributes << '.';
-	glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
-	std::cout << numAttributes << '\n';
-
-	int computeCount[3]{0,0,0};
-	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, computeCount);
-	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, computeCount+1);
-	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, computeCount+2);
-	std::cout << "max X compute: " << computeCount[0] <<
-		        ".max Y compute: " << computeCount[1] <<
-		        ".max Z compute: " << computeCount[2] << '\n';
-
-	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &numAttributes);
-	std::cout << "max shader dispatch count: " << numAttributes << '\n';
-
-	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_SIZE , &numAttributes);
-	std::cout << "max work group size: " << numAttributes << '\n';
 
 	std::vector<glm::vec3> vertexes {
 	    {-1.f, 1.f, 0.0f},
@@ -276,10 +217,6 @@ int main() {
 	             GL_FLOAT, NULL);
 
 	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-
-	float deltaTime { 0.0f };
-	float lastFrame { 0.0f };
-	int fCounter { 0 };
 
 	Stopwatch stopwatch;
 
@@ -322,24 +259,57 @@ int main() {
 	    }
 		Camera::Update();
 
-		float currentFrame = glfwGetTime();
+		float currentFrame = static_cast<float>(glfwGetTime());
 		shader.Bind();
 		shader.SetUniform1f("t", currentFrame);
 		shader.Unbind();
-		
-		//deltaTime += currentFrame - lastFrame;
-		//lastFrame = currentFrame;
-		//if(fCounter > 1000) {
-		//	std::cout << "FPS: " << 1000 / deltaTime << std::endl;
-		//	fCounter = 0;
-		//	deltaTime = 0;
-		//} else {
-		//	fCounter++;
-		//}
 	}
 
 	glfwTerminate();
 	return 0;
+}
 
-    
+void PrintGLStats(){
+
+	int numAttributes = 0;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
+    std::cout << "Max vertex attributes: " << numAttributes << '\n';
+
+    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
+    std::cout << "Max uniform locations: " << numAttributes << '\n';
+
+    glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
+    std::cout << "GL version: " << numAttributes << '.';
+    glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
+    std::cout << numAttributes << '\n';
+
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
+	std::cout << "Max vertex attributes: " << numAttributes << '\n';
+
+	glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
+	std::cout << "Max uniform locations: " << numAttributes << '\n';
+
+	glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
+	std::cout << "GL version: " << numAttributes << '.';
+	glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
+	std::cout << numAttributes << '\n';
+
+	int computeCount[3]{0,0,0};
+	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, computeCount);
+	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, computeCount+1);
+	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, computeCount+2);
+	std::cout << "max X compute: " << computeCount[0] <<
+		        ".max Y compute: " << computeCount[1] <<
+		        ".max Z compute: " << computeCount[2] << '\n';
+
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &numAttributes);
+	std::cout << "max shader dispatch count: " << numAttributes << '\n';
+
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_SIZE , &numAttributes);
+	std::cout << "max work group size: " << numAttributes << '\n';
+
+}
+
+int main() {
+	cubeMarch();
 }
