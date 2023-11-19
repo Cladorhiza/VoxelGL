@@ -18,7 +18,7 @@ namespace InputManager{
 	std::unordered_map<int, int> keys;
 	//has key toggled this frame
 	std::unordered_map<int, bool> keyToggle;
-	//mousePosition
+	//mouse position
 	double cursorXPos = 0, cursorYPos = 0, cursorOldXPos = 0, cursorOldYPos = 0;
 	double scrollYAxisOffset = 0;
 

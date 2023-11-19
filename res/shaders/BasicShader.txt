@@ -36,26 +36,26 @@ out vec4 out_Color;
 
 void main()
 {
-	vec3 ambientLight = vec3(0.0f,1.0f,0.0f);
-	float ambientCoefficient = 0.5f;
-	vec3 ambientTerm = ambientCoefficient * ambientLight;
+	//vec3 ambientLight = vec3(0.0f,1.0f,0.0f);
+	//float ambientCoefficient = 0.5f;
+	//vec3 ambientTerm = ambientCoefficient * ambientLight;
+	//
+	//vec3 diffuseLight = vec3(1.0f,0.f,0.f);
+	//float diffuseCoefficient = 1.0f;
+	//vec3 diffuseLightPosition = vec3(0.0f,0.0f,0.0f);
+	//vec3 lightDir = normalize(diffuseLightPosition - ex_worldPos);
+	//float NdotL = max(dot(lightDir, normalize(ex_normal)), 0.0f);
+	//vec3 diffuseTerm = diffuseCoefficient * NdotL * diffuseLight;
+	//
+	//vec3 result = (diffuseTerm) * ex_Color;
+	//if (NdotL < 0.01f){
+	//	out_Color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	//}
+	//else{
+	//	out_Color = vec4(result, 1.0f);
+	//}
 
-	vec3 diffuseLight = vec3(1.0f,0.f,0.f);
-	float diffuseCoefficient = 1.0f;
-	vec3 diffuseLightPosition = vec3(0.0f,0.0f,0.0f);
-	vec3 lightDir = normalize(diffuseLightPosition - ex_worldPos);
-	float NdotL = max(dot(lightDir, normalize(ex_normal)), 0.0f);
-	vec3 diffuseTerm = diffuseCoefficient * NdotL * diffuseLight;
-
-	vec3 result = (diffuseTerm) * ex_Color;
-	if (NdotL < 0.01f){
-		out_Color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	}
-	else{
-		out_Color = vec4(result, 1.0f);
-	}
-
-
+	out_Color = vec4(ex_Color, 1.0f);
 
 
 

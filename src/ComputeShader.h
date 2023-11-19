@@ -14,6 +14,8 @@ public:
 
 	static unsigned int CreateShader(const std::string& computeSource);
 	static unsigned int CompileShader(const std::string& source);
+
+	void SetUniform1f(const std::string& name, float f);
 private:
 
 	unsigned int rendererID;

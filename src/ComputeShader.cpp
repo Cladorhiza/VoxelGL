@@ -55,3 +55,7 @@ unsigned int ComputeShader::CreateShader(const std::string& computeSource) {
 
 	return program;
 }
+
+void ComputeShader::SetUniform1f(const std::string& name, float f) {
+	glUniform1f(glGetUniformLocation(rendererID, name.c_str()), f);
+}

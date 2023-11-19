@@ -36,7 +36,7 @@ int Init() {
     }
 
     /* Create a windowed mode g_window and its OpenGL context */
-    g_window = glfwCreateWindow(1920/2, 1080/2, "marching cubes", NULL, NULL);
+    g_window = glfwCreateWindow(1000, 1000, "marching cubes", NULL, NULL);
 
 	if (!g_window) {
         glfwTerminate();
@@ -45,6 +45,8 @@ int Init() {
 
     /* Make the g_window's context current */
     glfwMakeContextCurrent(g_window);
+
+	glfwSwapInterval(0); /*disable vsync*/
 
     if (glewInit() != GLEW_OK) {
 		std::cout << "openGL failed to initialize" << '\n';
@@ -132,27 +134,14 @@ int cubeMarch() {
 	/* Loop until the user closes the g_window */
     while (!glfwWindowShouldClose(g_window))
     {
-        //Rendering
-        glClear(GL_COLOR_BUFFER_BIT);
-
-		shader.SetUniformMat4f("viewMatrix",Camera::GetViewMatrix());
-
-		glBindVertexArray(vaoMarch);
-    	glDrawElements(GL_TRIANGLES, static_cast<unsigned>(marchingIndexes.size()), GL_UNSIGNED_INT, nullptr);
-		glBindVertexArray(0);
-        /* Swap front and back buffers */
-        glfwSwapBuffers(g_window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-        //Update inputs
+		/* Poll for and process events */
         InputManager::Poll(g_window);
 
         if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 	        break;
         }
     	if (InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
-	        surfaceLevel += 0.01f;
+	        surfaceLevel += 1.f;
             std::cout << surfaceLevel << '\n';
             marchingVertexes.clear();
             marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
@@ -172,7 +161,7 @@ int cubeMarch() {
 			}
         }
     	if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
-	        surfaceLevel -= 0.01f;
+	        surfaceLevel -= 1.f;
             std::cout << surfaceLevel << '\n';
             marchingVertexes.clear();
             marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
@@ -193,6 +182,19 @@ int cubeMarch() {
 
         }
 		Camera::Update();
+
+        //Rendering
+        glClear(GL_COLOR_BUFFER_BIT);
+
+		shader.SetUniformMat4f("viewMatrix",Camera::GetViewMatrix());
+
+		glBindVertexArray(vaoMarch);
+    	glDrawElements(GL_TRIANGLES, static_cast<unsigned>(marchingIndexes.size()), GL_UNSIGNED_INT, nullptr);
+		glBindVertexArray(0);
+        
+        /* Swap front and back buffers */
+        glfwSwapBuffers(g_window);
+
     }
 
     glfwTerminate();
@@ -203,63 +205,63 @@ int cubeMarch() {
 
 int main() {
 
-    if (Init() < 0) {
+	if (Init() < 0) {
 	    std::cout << "Initialization failed! rip." << '\n';
-        return -1;
-    }
+	    return -1;
+	}
 
 	std::cout << "Initialization successful!" << '\n';
-    int numAttributes = 0;
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
-    std::cout << "Max vertex attributes: " << numAttributes << '\n';
+	int numAttributes = 0;
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttributes);
+	std::cout << "Max vertex attributes: " << numAttributes << '\n';
 
-    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
-    std::cout << "Max uniform locations: " << numAttributes << '\n';
+	glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &numAttributes);
+	std::cout << "Max uniform locations: " << numAttributes << '\n';
 
-    glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
-    std::cout << "GL version: " << numAttributes << '.';
-    glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
-    std::cout << numAttributes << '\n';
+	glGetIntegerv(GL_MAJOR_VERSION, &numAttributes);
+	std::cout << "GL version: " << numAttributes << '.';
+	glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
+	std::cout << numAttributes << '\n';
 
-    int computeCount[3]{0,0,0};
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, computeCount);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, computeCount+1);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, computeCount+2);
-    std::cout << "max X compute: " << computeCount[0] <<
+	int computeCount[3]{0,0,0};
+	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, computeCount);
+	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, computeCount+1);
+	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, computeCount+2);
+	std::cout << "max X compute: " << computeCount[0] <<
 		        ".max Y compute: " << computeCount[1] <<
 		        ".max Z compute: " << computeCount[2] << '\n';
 
-    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &numAttributes);
-    std::cout << "max shader dispatch count: " << numAttributes << '\n';
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &numAttributes);
+	std::cout << "max shader dispatch count: " << numAttributes << '\n';
 
 	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_SIZE , &numAttributes);
-    std::cout << "max work group size: " << numAttributes << '\n';
+	std::cout << "max work group size: " << numAttributes << '\n';
 
-    std::vector<glm::vec3> vertexes {
-        {-0.5f, 0.5f, 0.0f},
-        { 0.5f, 0.5f, 0.0f},
-        { 0.5f,-0.5f, 0.0f},
-        { 0.5f,-0.5f, 0.0f},
-        {-0.5f,-0.5f, 0.0f},
-        {-0.5f, 0.5f, 0.0f}
-    };
+	std::vector<glm::vec3> vertexes {
+	    {-1.f, 1.f, 0.0f},
+	    { 1.f, 1.f, 0.0f},
+	    { 1.f,-1.f, 0.0f},
+	    { 1.f,-1.f, 0.0f},
+	    {-1.f,-1.f, 0.0f},
+	    {-1.f, 1.f, 0.0f}
+	};
 
-    std::vector<glm::vec2> texCoords {
-        {0.0f, 0.0f},
-        {1.0f, 0.0f},
-        {1.0f, 1.0f},
-        {1.0f, 1.0f},
-        {0.0f, 1.0f},
-        {0.0f, 0.0f}
-    };
+	std::vector<glm::vec2> texCoords {
+	    {0.0f, 0.0f},
+	    {1.0f, 0.0f},
+	    {1.0f, 1.0f},
+	    {1.0f, 1.0f},
+	    {0.0f, 1.0f},
+	    {0.0f, 0.0f}
+	};
 
-    unsigned int texturedQuad = GLUtil::BuildVAOfromData(vertexes, texCoords);
+	unsigned int texturedQuad = GLUtil::BuildVAOfromData(vertexes, texCoords);
 
-    const ComputeShader shader("res/shaders/ComputeShader.txt");
-    const Shader texShader("res/shaders/TextureShader.txt");
+	ComputeShader shader("res/shaders/ComputeShader.txt");
+	Shader texShader("res/shaders/TextureShader.txt");
 
-    // texture size
-	const unsigned int TEXTURE_WIDTH = 512, TEXTURE_HEIGHT = 512;
+	// texture size
+	const unsigned int TEXTURE_WIDTH = 1000, TEXTURE_HEIGHT = 1000;
 	unsigned int texture;
 
 	glGenTextures(1, &texture);
@@ -274,46 +276,63 @@ int main() {
 
 	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
+	float deltaTime { 0.0f };
+	float lastFrame { 0.0f };
+	int fCounter { 0 };
 
-	/* Loop until the user closes the g_window */
-    while (!glfwWindowShouldClose(g_window))
-    {
-        //Rendering
-        glClear(GL_COLOR_BUFFER_BIT);
+	//* Loop until the user closes the g_window */
+	while (!glfwWindowShouldClose(g_window))
+	{
+	    //Rendering
+	    glClear(GL_COLOR_BUFFER_BIT);
 
 	        
 	    shader.Bind();
-	    glDispatchCompute(static_cast<unsigned int>(TEXTURE_WIDTH), static_cast<unsigned int>(TEXTURE_HEIGHT), 1);
-        shader.Unbind();
+	    glDispatchCompute(TEXTURE_WIDTH/25, TEXTURE_HEIGHT/25, 1);
+	    shader.Unbind();
 
-        // make sure writing to image has finished before read
+	    // make sure writing to image has finished before read
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
+	    glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 
-        texShader.Bind();
-        glBindVertexArray(texturedQuad);
-    	glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
-        texShader.Unbind();
+	    texShader.Bind();
+	    glBindVertexArray(texturedQuad);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	    glBindVertexArray(0);
+	    texShader.Unbind();
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(g_window);
+	    /* Swap front and back buffers */
+	    glfwSwapBuffers(g_window);
 
-        /* Poll for and process events */
-        glfwPollEvents();
-        //Update inputs
-        InputManager::Poll(g_window);
+	    /* Poll for and process events */
+	    glfwPollEvents();
+	    //Update inputs
+	    InputManager::Poll(g_window);
 
-        if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-	        break;
-        }
+	    if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+	       break;
+	    }
 		Camera::Update();
-    }
 
-    glfwTerminate();
-    return 0;
+		float currentFrame = glfwGetTime();
+		shader.Bind();
+		shader.SetUniform1f("t", currentFrame);
+		shader.Unbind();
+		deltaTime += currentFrame - lastFrame;
+		lastFrame = currentFrame;
+		if(fCounter > 1000) {
+			std::cout << "FPS: " << 1000 / deltaTime << std::endl;
+			fCounter = 0;
+			deltaTime = 0;
+		} else {
+			fCounter++;
+		}
+	}
+
+	glfwTerminate();
+	return 0;
 
     
 }
