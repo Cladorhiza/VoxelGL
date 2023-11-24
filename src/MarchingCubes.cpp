@@ -1,12 +1,13 @@
 #include "MarchingCubes.h"
 
+#include "glm.hpp"
+#include "vec3.hpp"
+
 #include <vector>
 #include <array>
 #include <iostream>
 
-#include "vec3.hpp"
-#include "glm.hpp"
-
+#include "Stopwatch.h"
 
 inline constexpr int edgeTable[256] =
 {
@@ -355,6 +356,7 @@ std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<s
 												 float surfaceValue,
 												 std::vector<glm::vec3>& outNormals) 
 {
+	Stopwatch stopwatch;
 	std::vector<glm::vec3> vertexes;
 
 	for (size_t i{0}; i < gridValues.size()-1; ++i) {
@@ -387,5 +389,6 @@ std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<s
 	    }
     }
 
+	std::cout << "Cube marching complete. Vertexes created: " << vertexes.size() << ". Time taken: " << stopwatch.ToString() << "\n";
 	return vertexes;
 }

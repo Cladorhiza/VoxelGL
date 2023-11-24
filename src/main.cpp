@@ -26,10 +26,10 @@ GLFWwindow* g_window{nullptr};
 constexpr uint32_t WIDTH { 1000 };
 constexpr uint32_t HEIGHT { 1000 };
 constexpr float CLIP_NEAR {0.01f};
-constexpr float CLIP_FAR {1000.f};
+constexpr float CLIP_FAR {2000.f};
 constexpr float VFOV { 70.0f };
-constexpr uint32_t CHUNK_SIZE { 32 };
-constexpr float SURFACE_LEVEL = 1000.0f;
+constexpr uint32_t CHUNK_SIZE { 128 };
+constexpr float SURFACE_LEVEL = 1000.f;
 
 int Init() {
 
@@ -39,9 +39,9 @@ int Init() {
     if (!glfwInit()) {
         return -1;
     }
-
+	 
     /* Create a windowed mode g_window and its OpenGL context */
-    g_window = glfwCreateWindow(WIDTH, HEIGHT, "marching cubes", NULL, NULL);
+    g_window = glfwCreateWindow(WIDTH, HEIGHT, "Marching Cubes", NULL, NULL);
 
 	if (!g_window) {
         glfwTerminate();
@@ -72,7 +72,7 @@ int cubeMarch() {
     }
 	std::cout << "Initialization successful!" << '\n';
 
-	glm::mat4 projection{ glm::perspective(VFOV, static_cast<float>(WIDTH)/HEIGHT, CLIP_NEAR, CLIP_FAR) };
+	glm::mat4 projection{ glm::perspective(glm::radians(VFOV), static_cast<float>(WIDTH)/HEIGHT, CLIP_NEAR, CLIP_FAR) };
 	glm::mat4 view{Camera::GetViewMatrix()};
 	float surfaceLevel = SURFACE_LEVEL;
 
@@ -131,7 +131,7 @@ int cubeMarch() {
         }
 		//regenerate chunk with increased surface level
     	if (InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
-	        surfaceLevel += 1.f;
+	        surfaceLevel += 5.f;
             std::cout << surfaceLevel << '\n';
 
             marchingVertexes.clear();
@@ -141,7 +141,7 @@ int cubeMarch() {
         }
 		//regenerate chunk with decreased surface level
     	if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
-	        surfaceLevel -= 1.f;
+	        surfaceLevel -= 5.f;
             std::cout << surfaceLevel << '\n';
 
             marchingVertexes.clear();
@@ -149,6 +149,20 @@ int cubeMarch() {
             glDeleteVertexArrays(1, &vaoMarch);
             vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
         }
+		if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS || InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
+		
+			marchingColours.clear();
+			marchingIndexes.clear();
+			for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+				marchingIndexes.emplace_back(i);
+				marchingIndexes.emplace_back(i+1);
+				marchingIndexes.emplace_back(i+2);
+			}
+		}
+
 		Camera::Update();
 
         //Rendering
@@ -291,10 +305,10 @@ void PrintGLStats(){
 	glGetIntegerv(GL_MINOR_VERSION, &numAttributes);
 	std::cout << numAttributes << '\n';
 
-	int computeCount[3]{0,0,0};
-	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, computeCount);
-	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, computeCount+1);
-	glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, computeCount+2);
+	int computeCount[]{0,0,0};
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, computeCount);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, computeCount + 1);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, computeCount + 2);
 	std::cout << "max X compute: " << computeCount[0] <<
 		        ".max Y compute: " << computeCount[1] <<
 		        ".max Z compute: " << computeCount[2] << '\n';

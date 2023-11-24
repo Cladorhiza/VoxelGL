@@ -5,95 +5,59 @@ layout(location = 1) in vec3 in_Color;
 layout(location = 2) in vec3 in_Normal;
 
 out vec3 ex_Color;
-//out vec3 ex_lightToVertex;
+out float ex_NdotL;
 out vec3 ex_normal;
-out vec3 ex_worldPos;
+out vec3 ex_pointToCamera;
+out vec3 ex_lightBounce;
 
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 
-
-
 void main()
 {
-	gl_Position = projectionMatrix * viewMatrix * vec4(in_Position, 1.0);
+	vec3 lightPosition = vec3(-10000.0f, 0.f, 0.f);
+
+	gl_Position = projectionMatrix * viewMatrix * vec4(in_Position, 1.0f);
 	ex_normal = in_Normal;
 	ex_Color = in_Color;
-	ex_worldPos = in_Position;
-
+	vec3 cameraLocation = vec3(0.0f, 0.0f, -1.0f);
+	ex_pointToCamera = normalize(cameraLocation - (viewMatrix * vec4(in_Position, 1.0f)).xyz);
+	vec3 lightToVertex = normalize(in_Position - lightPosition);
+	ex_NdotL = dot(in_Normal, lightToVertex);
+	ex_lightBounce = reflect((viewMatrix * vec4(lightToVertex, 1.0f)).xyz, (viewMatrix * vec4(in_Normal, 1.0f)).xyz);
 };
 
 #shader fragment
 #version 330 core
 
-//in vec3 ex_lightToVertex;
-//in vec3 ex_Color;
 in vec3 ex_normal;
-in vec3 ex_worldPos;
-
+in vec3 ex_pointToCamera;
 in vec3 ex_Color;
+in float ex_NdotL;
+in vec3 ex_lightBounce;
+
 out vec4 out_Color;
 
 void main()
 {
-	//vec3 ambientLight = vec3(0.0f,1.0f,0.0f);
-	//float ambientCoefficient = 0.5f;
-	//vec3 ambientTerm = ambientCoefficient * ambientLight;
-	//
-	//vec3 diffuseLight = vec3(1.0f,0.f,0.f);
-	//float diffuseCoefficient = 1.0f;
-	//vec3 diffuseLightPosition = vec3(0.0f,0.0f,0.0f);
-	//vec3 lightDir = normalize(diffuseLightPosition - ex_worldPos);
-	//float NdotL = max(dot(lightDir, normalize(ex_normal)), 0.0f);
-	//vec3 diffuseTerm = diffuseCoefficient * NdotL * diffuseLight;
-	//
-	//vec3 result = (diffuseTerm) * ex_Color;
-	//if (NdotL < 0.01f){
-	//	out_Color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	//}
-	//else{
-	//	out_Color = vec4(result, 1.0f);
-	//}
+	//light params
+	vec3 lightAmbient = vec3(0.2f, 0.2f, 0.2f);
+	vec3 lightDiffuse = vec3(0.9f, 0.0f, 0.1f);
+	vec3 lightSpecular = vec3(0.0f, 0.0f, 0.9f);
 
-	out_Color = vec4(ex_Color, 1.0f);
+	//material params
+	float ambientConstant  = 0.2f;
+	float diffuseConstant  = 0.6f;
+	float specularConstant = 0.2f;
+	float shininess = 10.f;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//vec3 surfaceColour = vec3(0.8f, 0.0f, 0.0f);
-	//float ambientCoefficient = 0.2f;
-	//float diffuseCoefficient = 0.8f;
-	//float specularCoefficient = 0.1f;
-	//
-	//vec3 ambientLightColour = vec3(0.6f, 0.6f, 0.6f);
-	//
-	//float NdotL = max(dot(normalize(ex_lightToVertex), ex_normal),0.0f);
-	//
-	//
-	//vec3 ambientTerm = ambientLightColour * ambientCoefficient;
-	//vec3 diffuseTerm = ambientLightColour * NdotL * diffuseCoefficient;
-	//
-	//vec3 intensity = surfaceColour * (ambientTerm + diffuseTerm);
-	//if (NdotL < 0.0f){
-	//	out_Color = vec4(0.0f, 0.0f, 0.8f, 1.0);
-	//}
-	//else{
-	//	out_Color = vec4(diffuseTerm, 1.0);
-	//}
+	if (ex_NdotL < 0.0f) {
+		out_Color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	}
+	else {
+		vec3 ambient = ambientConstant * lightAmbient;
+		vec3 diffuse = diffuseConstant * ex_NdotL * lightDiffuse;
+		vec3 specular = specularConstant * pow(dot(ex_lightBounce, ex_pointToCamera), shininess) * lightSpecular;
+		out_Color = vec4(ambient + diffuse + specular, 1.0f);
+	}
 };

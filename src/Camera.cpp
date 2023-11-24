@@ -5,8 +5,7 @@
 namespace Camera {
 
     constexpr glm::vec3 DEFAULT_DIRECTION(0.f, 0.f, -1.f);
-    constexpr glm::vec3 ORIGIN(0.f, 0.f, 0.f);
-    constexpr glm::vec3 DEFAULT_POSITION(0.f, 0.f, -1.f);
+    constexpr glm::vec3 DEFAULT_POSITION(0.f, 0.f, 500.f);
     constexpr float DEFAULT_SENSITIVITY = 0.05f;
     glm::mat4 viewMatrix(1.f);
     glm::vec3 yawAxis(0.f, 1.f, 0.f);
@@ -17,7 +16,7 @@ namespace Camera {
     float zoom = 0.f;
     void Update() {
 
-        zoom = DEFAULT_POSITION.z + InputManager::GetMouseScrollYOffset()*2;
+        zoom = DEFAULT_POSITION.z + InputManager::GetMouseScrollYOffset()*20;
         sensitivity = GetZoomSensitivity();
         if (InputManager::GetKeyState(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
             glm::vec3 tmp(InputManager::GetDeltaMouseX() * sensitivity, -InputManager::GetDeltaMouseY() * sensitivity, 0.f);
