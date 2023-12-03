@@ -10,6 +10,9 @@
 #include "GLFW/glfw3.h"
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_glfw.h"
 
 //my headers
 #include "InputManager.h"
@@ -120,6 +123,22 @@ int cubeMarch() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
+
+	//imgui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(g_window, true);
+    const char* glsl_version = "#version 150";
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+
 	/* Loop until the user closes the g_window */
     while (!glfwWindowShouldClose(g_window))
     {
@@ -167,6 +186,24 @@ int cubeMarch() {
 
         //Rendering
         glClear(GL_COLOR_BUFFER_BIT);
+
+		// Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Light Settings");
+        //ImGui::SliderFloat3("Position", &shader.lightInfo.worldPosition.x, -300.0f, 300.0f);            
+        //ImGui::ColorEdit3("Ambient Intensity", &shader.lightInfo.ambientIntensity.x);            
+        //ImGui::ColorEdit3("Diffuse Intensity", &shader.lightInfo.diffuseIntensity.x);            
+        //ImGui::ColorEdit3("Specular Intensity", &shader.lightInfo.specularIntensity.x);            
+        //framerate
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        ImGui::End();
+        
+
+        ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		shader.SetUniformMat4f("viewMatrix",Camera::GetViewMatrix());
 
