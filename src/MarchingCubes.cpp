@@ -390,6 +390,6 @@ std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<s
 	    }
     }
 
-	std::cout << "Cube marching complete. Vertexes created: " << vertexes.size() << ". Time taken: " << stopwatch.ToString() << "\n";
+	//std::cout << "Cube marching complete. Vertexes created: " << vertexes.size() << ". Time taken: " << stopwatch.ToString() << "\n";
 	return vertexes;
 }

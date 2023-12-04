@@ -33,7 +33,7 @@ constexpr float CLIP_NEAR {0.01f};
 constexpr float CLIP_FAR {2000.f};
 constexpr float VFOV { 70.0f };
 constexpr uint32_t CHONK_SIZE { 32 };
-constexpr float CHUNK_LOAD_RADIUS { 160.f };
+constexpr float CHUNK_LOAD_RADIUS { 320.f };
 constexpr float SURFACE_LEVEL = 0.f;
 
 //if radius / chunkSize != an integer, this won't look at correctly spaced chunks
@@ -130,8 +130,11 @@ int cubeMarch() {
     }
 	std::cout << "Initialization successful!" << '\n';
 
+	Camera mainCamera;
+	float cameraSpeed { 1.f };
+    float cameraRotationSpeed { 1.f};
 	glm::mat4 projection{ glm::perspective(glm::radians(VFOV), static_cast<float>(WIDTH)/HEIGHT, CLIP_NEAR, CLIP_FAR) };
-	glm::mat4 view{Camera::GetViewMatrix()};
+	glm::mat4 view { mainCamera.GetViewMatrix() };
 	float surfaceLevel = SURFACE_LEVEL;
 
     Shader shader("res/shaders/BasicShader.txt");
@@ -210,7 +213,17 @@ int cubeMarch() {
 	        break;
         }
 
-		Camera::Update();
+		//camera
+        if (InputManager::GetKeyState(GLFW_KEY_Q) ==     GLFW_PRESS) mainCamera.Translate(-mainCamera.GetUp() * cameraSpeed);
+        if (InputManager::GetKeyState(GLFW_KEY_E) ==     GLFW_PRESS) mainCamera.Translate(mainCamera.GetUp() * cameraSpeed);
+        if (InputManager::GetKeyState(GLFW_KEY_W) ==     GLFW_PRESS) mainCamera.Translate(mainCamera.GetForward() * cameraSpeed);
+        if (InputManager::GetKeyState(GLFW_KEY_A) ==     GLFW_PRESS) mainCamera.Translate(-mainCamera.GetRight() * cameraSpeed);
+        if (InputManager::GetKeyState(GLFW_KEY_S) ==     GLFW_PRESS) mainCamera.Translate(-mainCamera.GetForward() * cameraSpeed);
+        if (InputManager::GetKeyState(GLFW_KEY_D) ==     GLFW_PRESS) mainCamera.Translate(mainCamera.GetRight() * cameraSpeed);
+        if (InputManager::GetKeyState(GLFW_KEY_UP) ==    GLFW_PRESS) mainCamera.Rotate(glm::vec3{cameraRotationSpeed, 0.0f, 0.0f});
+        if (InputManager::GetKeyState(GLFW_KEY_DOWN) ==  GLFW_PRESS) mainCamera.Rotate(glm::vec3{-cameraRotationSpeed, 0.0f, 0.0f});
+        if (InputManager::GetKeyState(GLFW_KEY_LEFT) ==  GLFW_PRESS) mainCamera.Rotate(glm::vec3{0.0f, cameraRotationSpeed, 0.0f});
+        if (InputManager::GetKeyState(GLFW_KEY_RIGHT) == GLFW_PRESS) mainCamera.Rotate(glm::vec3{0.0f, -cameraRotationSpeed, 0.0f});
 
         //Rendering
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -231,7 +244,7 @@ int cubeMarch() {
 
         ImGui::Render();
 
-		shader.SetUniformMat4f("viewMatrix",Camera::GetViewMatrix());
+		shader.SetUniformMat4f("viewMatrix", mainCamera.GetViewMatrix());
 
 		for (auto [vao, indexCount] : glChunkIDs){
 		
@@ -337,8 +350,7 @@ int ComputeTest(){
 	    if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 	       break;
 	    }
-		Camera::Update();
-
+		
 		float currentFrame = static_cast<float>(glfwGetTime());
 		shader.Bind();
 		shader.SetUniform1f("t", currentFrame);
