@@ -354,7 +354,8 @@ void MarchCube(std::vector<glm::vec3>& outVertexes, std::array<float,8>& cubeDat
 //TODO: Remove duplicate vertexes, map? or cache border indexes while looping over them
 std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<std::vector<float>>>& gridValues, 
 												 float surfaceValue,
-												 std::vector<glm::vec3>& outNormals) 
+												 std::vector<glm::vec3>& outNormals,
+												 const glm::vec3& startingPosition) 
 {
 	Stopwatch stopwatch;
 	std::vector<glm::vec3> vertexes;
@@ -383,7 +384,7 @@ std::vector<glm::vec3> MarchingCubes::MarchCubes(const std::vector<std::vector<s
 
 					//add offset of grid values to vertex positions
 					glm::vec3 delta{i,j,k};
-					vertexes[l] += delta;
+					vertexes[l] += delta + startingPosition;
 				}
             }
 	    }

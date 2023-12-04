@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <array>
 #include <time.h>
+#include <deque>
 //thirdparty
 #include "GL/glew.h"
 #include "gl/GL.h"
@@ -31,8 +32,43 @@ constexpr uint32_t HEIGHT { 1000 };
 constexpr float CLIP_NEAR {0.01f};
 constexpr float CLIP_FAR {2000.f};
 constexpr float VFOV { 70.0f };
-constexpr uint32_t CHUNK_SIZE { 32 };
-constexpr float SURFACE_LEVEL = 1000.f;
+constexpr uint32_t CHONK_SIZE { 32 };
+constexpr float CHUNK_LOAD_RADIUS { 160.f };
+constexpr float SURFACE_LEVEL = 0.f;
+
+//if radius / chunkSize != an integer, this won't look at correctly spaced chunks
+std::vector<glm::vec3> GetChunksWithinRadiusFromPoint(glm::vec3 point, float radius, float chunkSize){
+
+	//truncate the point to a chunk point
+	point /= chunkSize;
+	glm::ivec3 intPoint {point};
+	point = glm::vec3{intPoint} * chunkSize;
+
+	std::vector<glm::vec3> chunkLocationsToLoad;
+
+
+	glm::vec3 minBound {point - radius};
+	glm::vec3 maxBound {point + radius};
+
+	for (float x {minBound.x}; x <= maxBound.x; x+= chunkSize){
+		for (float y {minBound.y}; y <= maxBound.y; y+= chunkSize){
+			for (float z {minBound.z}; z <= maxBound.z; z+= chunkSize){
+			
+				if (glm::length(glm::vec3{x, y, z} - point) < radius){
+					chunkLocationsToLoad.emplace_back(x, y, z);
+				}
+			}
+		}
+	}
+	return chunkLocationsToLoad;
+} 
+
+struct Chonk {
+
+	std::vector<std::vector<std::vector<float>>> density;
+
+	glm::vec3 position;
+};
 
 int Init() {
 
@@ -63,6 +99,7 @@ int Init() {
 	InputManager::Init(g_window);
 
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
 
 	//imgui
@@ -104,36 +141,61 @@ int cubeMarch() {
 
     FastNoise fn;
     fn.SetNoiseType(FastNoise::PerlinFractal);
+	
+	time_t t;
+	time(&t);
+	srand(t);
+	fn.SetSeed(rand());
 
     std::vector<std::vector<std::vector<float>>> cubeData;
 
-    for (int i{0}; i < CHUNK_SIZE; ++i) {
-        cubeData.emplace_back();
-	    for (int j{0}; j < CHUNK_SIZE; ++j) {
-			cubeData[i].emplace_back();
-            for (int k{0}; k < CHUNK_SIZE; ++k) {
-                //cubeData[i][j].push_back(fn.GetNoise(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
-                cubeData[i][j].push_back(sphereFunc(static_cast<float>(i),static_cast<float>(j),static_cast<float>(k)));
+	std::vector<Chonk> loadedChunks;
+	std::vector<glm::vec3> chunkLoadLocations { GetChunksWithinRadiusFromPoint({0.f, 0.f, 0.f}, CHUNK_LOAD_RADIUS, CHONK_SIZE) };
+	std::deque<glm::vec3> chunksToLoad { chunkLoadLocations.begin(), chunkLoadLocations.end() };
+	loadedChunks.reserve(chunksToLoad.size());
+	std::vector<std::pair<unsigned, size_t>> glChunkIDs;
+	glChunkIDs.reserve(chunksToLoad.size());
 
-            }
-	    }
-    }
+	for (const glm::vec3& chunkPos : chunksToLoad){
+		
+		loadedChunks.emplace_back();
 
-	std::vector<glm::vec3> marchingNormals;
-	std::vector<unsigned>  marchingIndexes;
-	std::vector<glm::vec3> marchingColours;
-	std::vector<glm::vec3> marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
+		//TODO: The chunks are generating one larger because they don't share vertices yet
+		Chonk& currentChunk = loadedChunks.back();
+		currentChunk.position = chunkPos;
+		currentChunk.density.reserve(CHONK_SIZE+1);
+		
+		for (int x { 0 }; x < CHONK_SIZE+1; x++){
+			currentChunk.density.emplace_back();
+			currentChunk.density[x].reserve(CHONK_SIZE+1);
+			for (int y { 0 }; y < CHONK_SIZE+1; y++){
+				currentChunk.density[x].emplace_back();
+				currentChunk.density[x][y].resize(CHONK_SIZE+1);
+				for (int z { 0 }; z < CHONK_SIZE+1; z++){
+				
+					currentChunk.density[x][y][z] = fn.GetNoise(static_cast<float>(x + static_cast<int>(chunkPos.x)),static_cast<float>(y + static_cast<int>(chunkPos.y)),static_cast<float>(z + static_cast<int>(chunkPos.z)));
+					
+				}
+			}
+		}
 
-	for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
-		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-		marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-		marchingIndexes.emplace_back(i);
-		marchingIndexes.emplace_back(i+1);
-		marchingIndexes.emplace_back(i+2);
+		std::vector<glm::vec3> marchingNormals;
+		std::vector<unsigned>  marchingIndexes;
+		std::vector<glm::vec3> marchingColours;
+		std::vector<glm::vec3> marchingVertexes = MarchingCubes::MarchCubes(currentChunk.density, surfaceLevel, marchingNormals, chunkPos);
+
+		for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
+			marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+			marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+			marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
+			marchingIndexes.emplace_back(i);
+			marchingIndexes.emplace_back(i+1);
+			marchingIndexes.emplace_back(i+2);
+		}
+
+		uint32_t vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
+		glChunkIDs.emplace_back(vaoMarch, marchingIndexes.size());
 	}
-
-	uint32_t vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
 
 	glm::vec3 lightPosition { 100.0f, 0.0f, 0.0f };
 	shader.SetUniformvec3f("lightWorldPosition", lightPosition.x, lightPosition.y, lightPosition.z);
@@ -147,46 +209,11 @@ int cubeMarch() {
         if (InputManager::GetKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 	        break;
         }
-		//regenerate chunk with increased surface level
-    	if (InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
-	        surfaceLevel += 5.f;
-            std::cout << surfaceLevel << '\n';
-
-			marchingNormals.clear();
-            marchingVertexes.clear();
-			marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
-            glDeleteVertexArrays(1, &vaoMarch);
-            vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
-        }
-		//regenerate chunk with decreased surface level
-    	if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
-	        surfaceLevel -= 5.f;
-            std::cout << surfaceLevel << '\n';
-
-			marchingNormals.clear();
-            marchingVertexes.clear();
-            marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
-            glDeleteVertexArrays(1, &vaoMarch);
-            vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
-        }
-		if (InputManager::GetKeyState(GLFW_KEY_D) == GLFW_PRESS || InputManager::GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
-		
-			marchingColours.clear();
-			marchingIndexes.clear();
-			for (size_t i{0}; i+3 < marchingVertexes.size(); i+=3) {
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-				marchingColours.emplace_back(1.0f, 1.0f, 1.0f);
-				marchingIndexes.emplace_back(i);
-				marchingIndexes.emplace_back(i+1);
-				marchingIndexes.emplace_back(i+2);
-			}
-		}
 
 		Camera::Update();
 
         //Rendering
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -194,7 +221,7 @@ int cubeMarch() {
         ImGui::NewFrame();
 
         ImGui::Begin("Light Settings");
-        ImGui::SliderFloat3("Light WorldPosition", &lightPosition.x, -100.0f, 100.0f);
+        ImGui::SliderFloat3("Light WorldPosition", &lightPosition.x, -1000.0f, 1000.0f);
 		shader.SetUniformvec3f("lightWorldPosition", lightPosition.x, lightPosition.y, lightPosition.z);
         //ImGui::ColorEdit3("Ambient Intensity", &shader.lightInfo.ambientIntensity.x);            
         //framerate
@@ -206,9 +233,12 @@ int cubeMarch() {
 
 		shader.SetUniformMat4f("viewMatrix",Camera::GetViewMatrix());
 
-		glBindVertexArray(vaoMarch);
-    	glDrawElements(GL_TRIANGLES, static_cast<unsigned>(marchingIndexes.size()), GL_UNSIGNED_INT, nullptr);
-		glBindVertexArray(0);
+		for (auto [vao, indexCount] : glChunkIDs){
+		
+			glBindVertexArray(vao);
+    		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+			glBindVertexArray(0);
+		}
         
 		//draw UI over everything else
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

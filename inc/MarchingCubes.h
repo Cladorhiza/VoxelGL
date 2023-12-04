@@ -6,6 +6,7 @@ namespace MarchingCubes
 {
 	std::vector<glm::vec3> MarchCubes(const std::vector<std::vector<std::vector<float>>>& gridValues, 
 									  float surfaceValue, 
-									  std::vector<glm::vec3>& outNormals);
+									  std::vector<glm::vec3>& outNormals,
+									  const glm::vec3& startingPosition);
 };
 

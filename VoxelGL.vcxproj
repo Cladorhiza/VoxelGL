@@ -26,6 +26,7 @@
     <ClCompile Include="dependencies\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="dependencies\imgui\imgui_tables.cpp" />
     <ClCompile Include="dependencies\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\Chunk.cpp" />
     <ClCompile Include="src\FileUtil.cpp" />
     <ClCompile Include="src\ComputeShader.cpp" />
     <ClCompile Include="dependencies\FastNoise-master\FastNoise.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="dependencies\imgui\imstb_rectpack.h" />
     <ClInclude Include="dependencies\imgui\imstb_textedit.h" />
     <ClInclude Include="dependencies\imgui\imstb_truetype.h" />
+    <ClInclude Include="inc\Chunk.h" />
     <ClInclude Include="inc\FileUtil.h" />
     <ClInclude Include="inc\ComputeShader.h" />
     <ClInclude Include="inc\MarchingCubes.h" />

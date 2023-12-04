@@ -51,13 +51,13 @@ void main()
 	//light	params
 	vec3 AmbientI = vec3(1.0f, 0.7f, 0.2f);
 	vec3 DiffuseI = vec3(1.0f, 0.7f, 0.2f);
-	vec3 SpecularI = vec3(1.0f, 0.0f, 0.f);
+	vec3 SpecularI = vec3(1.0f, 1.0f, 1.f);
 
 	//material params
 	vec3 ambientConstant  = vec3(0.2f, 0.2f, 0.2f);
 	vec3 diffuseConstant  = vec3(0.5f, 0.5f, 0.5f);
 	vec3 specularConstant = vec3(0.3f, 0.3f, 0.3f);
-	float shininess = 16.f;
+	float shininess = 64.f;
 
 	// normalize vectors after interpolation
 	vec3 L = normalize(ex_posToLight);
