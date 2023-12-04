@@ -152,6 +152,7 @@ int cubeMarch() {
 	        surfaceLevel += 5.f;
             std::cout << surfaceLevel << '\n';
 
+			marchingNormals.clear();
             marchingVertexes.clear();
 			marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
             glDeleteVertexArrays(1, &vaoMarch);
@@ -162,6 +163,7 @@ int cubeMarch() {
 	        surfaceLevel -= 5.f;
             std::cout << surfaceLevel << '\n';
 
+			marchingNormals.clear();
             marchingVertexes.clear();
             marchingVertexes = MarchingCubes::MarchCubes(cubeData, surfaceLevel, marchingNormals);
             glDeleteVertexArrays(1, &vaoMarch);
@@ -201,7 +203,6 @@ int cubeMarch() {
         
 
         ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		shader.SetUniformMat4f("viewMatrix",Camera::GetViewMatrix());
 
@@ -209,7 +210,10 @@ int cubeMarch() {
     	glDrawElements(GL_TRIANGLES, static_cast<unsigned>(marchingIndexes.size()), GL_UNSIGNED_INT, nullptr);
 		glBindVertexArray(0);
         
-        /* Swap front and back buffers */
+		//draw UI over everything else
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        
+		/* Swap front and back buffers */
         glfwSwapBuffers(g_window);
     }
 

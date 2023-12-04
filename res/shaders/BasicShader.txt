@@ -49,15 +49,15 @@ out vec4 out_Colour;
 void main()
 {
 	//light	params
-	vec3 AmbientI = vec3(1.0f, 1.0f, 1.0f);
-	vec3 DiffuseI = vec3(1.0f, 0.5f, 0.0f);
-	vec3 SpecularI = vec3(0.0f, 1.0f, 0.f);
+	vec3 AmbientI = vec3(1.0f, 0.7f, 0.2f);
+	vec3 DiffuseI = vec3(1.0f, 0.7f, 0.2f);
+	vec3 SpecularI = vec3(1.0f, 0.0f, 0.f);
 
 	//material params
 	vec3 ambientConstant  = vec3(0.2f, 0.2f, 0.2f);
 	vec3 diffuseConstant  = vec3(0.5f, 0.5f, 0.5f);
 	vec3 specularConstant = vec3(0.3f, 0.3f, 0.3f);
-	float shininess = 8.f;
+	float shininess = 16.f;
 
 	// normalize vectors after interpolation
 	vec3 L = normalize(ex_posToLight);
@@ -75,7 +75,7 @@ void main()
 		vec3 diffuseTerm = NdotL * DiffuseI * diffuseConstant;
 	
 		vec3 specularTerm = vec3(0.f, 0.f, 0.f);
-		vec3 R = reflect(V, N);
+		vec3 R = reflect(-V, N);
 		float RdotL = dot(R, L);
 		if (RdotL > 0){
 			specularTerm = pow(RdotL, shininess) * SpecularI * specularConstant;
