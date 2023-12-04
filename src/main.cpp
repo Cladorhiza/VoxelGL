@@ -31,7 +31,7 @@ constexpr uint32_t HEIGHT { 1000 };
 constexpr float CLIP_NEAR {0.01f};
 constexpr float CLIP_FAR {2000.f};
 constexpr float VFOV { 70.0f };
-constexpr uint32_t CHUNK_SIZE { 128 };
+constexpr uint32_t CHUNK_SIZE { 32 };
 constexpr float SURFACE_LEVEL = 1000.f;
 
 int Init() {
@@ -61,6 +61,24 @@ int Init() {
 	}
 
 	InputManager::Init(g_window);
+
+	glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+	//imgui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(g_window, true);
+    const char* glsl_version = "#version 150";
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
     return 1;
 }
 
@@ -88,9 +106,6 @@ int cubeMarch() {
     fn.SetNoiseType(FastNoise::PerlinFractal);
 
     std::vector<std::vector<std::vector<float>>> cubeData;
-
-	//time_t t;
-	//srand(static_cast<unsigned>(time(&t)));
 
     for (int i{0}; i < CHUNK_SIZE; ++i) {
         cubeData.emplace_back();
@@ -120,24 +135,8 @@ int cubeMarch() {
 
 	uint32_t vaoMarch = GLUtil::BuildVAOfromData(marchingVertexes, marchingColours, marchingIndexes, marchingNormals);
 
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-
-	//imgui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(g_window, true);
-    const char* glsl_version = "#version 150";
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
+	glm::vec3 lightPosition { 100.0f, 0.0f, 0.0f };
+	shader.SetUniformvec3f("lightWorldPosition", lightPosition.x, lightPosition.y, lightPosition.z);
 
 	/* Loop until the user closes the g_window */
     while (!glfwWindowShouldClose(g_window))
@@ -193,12 +192,11 @@ int cubeMarch() {
         ImGui::NewFrame();
 
         ImGui::Begin("Light Settings");
-        //ImGui::SliderFloat3("Position", &shader.lightInfo.worldPosition.x, -300.0f, 300.0f);            
+        ImGui::SliderFloat3("Light WorldPosition", &lightPosition.x, -100.0f, 100.0f);
+		shader.SetUniformvec3f("lightWorldPosition", lightPosition.x, lightPosition.y, lightPosition.z);
         //ImGui::ColorEdit3("Ambient Intensity", &shader.lightInfo.ambientIntensity.x);            
-        //ImGui::ColorEdit3("Diffuse Intensity", &shader.lightInfo.diffuseIntensity.x);            
-        //ImGui::ColorEdit3("Specular Intensity", &shader.lightInfo.specularIntensity.x);            
         //framerate
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
         
 

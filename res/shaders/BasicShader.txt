@@ -1,63 +1,88 @@
 #shader vertex
 #version 330 core
 layout(location = 0) in vec3 in_Position;
-layout(location = 1) in vec3 in_Color;
+layout(location = 1) in vec3 in_Colour;
 layout(location = 2) in vec3 in_Normal;
 
-out vec3 ex_Color;
-out float ex_NdotL;
+out vec3 ex_Colour;
 out vec3 ex_normal;
-out vec3 ex_pointToCamera;
-out vec3 ex_lightBounce;
+out vec3 ex_posToLight;
+out vec3 ex_posToCamera;
 
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
+uniform vec3 lightWorldPosition;
 
 void main()
 {
-	vec3 lightPosition = vec3(-10000.0f, 0.f, 0.f);
-
 	gl_Position = projectionMatrix * viewMatrix * vec4(in_Position, 1.0f);
-	ex_normal = in_Normal;
-	ex_Color = in_Color;
-	vec3 cameraLocation = vec3(0.0f, 0.0f, -1.0f);
-	ex_pointToCamera = normalize(cameraLocation - (viewMatrix * vec4(in_Position, 1.0f)).xyz);
-	vec3 lightToVertex = normalize(in_Position - lightPosition);
-	ex_NdotL = dot(in_Normal, lightToVertex);
-	ex_lightBounce = reflect((viewMatrix * vec4(lightToVertex, 1.0f)).xyz, (viewMatrix * vec4(in_Normal, 1.0f)).xyz);
+
+	//view space light position
+	vec3 lightViewPosition = vec3(viewMatrix * vec4(lightWorldPosition, 1.0f));
+	
+	//only rotate/scale the normal TODO: this does not work for non-uniform scaling look up normal matrix
+	//get viewspace normal
+	ex_normal = mat3(viewMatrix) * in_Normal;
+
+	//view space position of vertex
+	vec3 viewVertexPosition = vec3(viewMatrix * vec4(in_Position, 1.0f));
+
+	//view space vertex position -> light
+	ex_posToLight = lightViewPosition - viewVertexPosition;
+
+	//camera position is 0,0,0 in view space so just negate the vector to get the vector to camera
+	ex_posToCamera = -viewVertexPosition;
+
+	ex_Colour = in_Colour;
 };
 
 #shader fragment
 #version 330 core
 
+in vec3 ex_Colour;
 in vec3 ex_normal;
-in vec3 ex_pointToCamera;
-in vec3 ex_Color;
-in float ex_NdotL;
-in vec3 ex_lightBounce;
+in vec3 ex_posToLight;
+in vec3 ex_posToCamera;
 
-out vec4 out_Color;
+out vec4 out_Colour;
 
 void main()
 {
-	//light params
-	vec3 lightAmbient = vec3(0.2f, 0.2f, 0.2f);
-	vec3 lightDiffuse = vec3(0.9f, 0.0f, 0.1f);
-	vec3 lightSpecular = vec3(0.0f, 0.0f, 0.9f);
+	//light	params
+	vec3 AmbientI = vec3(1.0f, 1.0f, 1.0f);
+	vec3 DiffuseI = vec3(1.0f, 0.5f, 0.0f);
+	vec3 SpecularI = vec3(0.0f, 1.0f, 0.f);
 
 	//material params
-	float ambientConstant  = 0.2f;
-	float diffuseConstant  = 0.6f;
-	float specularConstant = 0.2f;
-	float shininess = 10.f;
+	vec3 ambientConstant  = vec3(0.2f, 0.2f, 0.2f);
+	vec3 diffuseConstant  = vec3(0.5f, 0.5f, 0.5f);
+	vec3 specularConstant = vec3(0.3f, 0.3f, 0.3f);
+	float shininess = 8.f;
 
-	if (ex_NdotL < 0.0f) {
-		out_Color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	// normalize vectors after interpolation
+	vec3 L = normalize(ex_posToLight);
+	vec3 V = normalize(ex_posToCamera);
+	vec3 N = normalize(ex_normal);
+
+	vec3 ambientTerm = AmbientI * ambientConstant;
+
+	float NdotL = dot(N, L);
+
+	if (NdotL <= 0.0f) {
+		out_Colour.xyz = ambientTerm * ex_Colour;
 	}
 	else {
-		vec3 ambient = ambientConstant * lightAmbient;
-		vec3 diffuse = diffuseConstant * ex_NdotL * lightDiffuse;
-		vec3 specular = specularConstant * pow(dot(ex_lightBounce, ex_pointToCamera), shininess) * lightSpecular;
-		out_Color = vec4(ambient + diffuse + specular, 1.0f);
+		vec3 diffuseTerm = NdotL * DiffuseI * diffuseConstant;
+	
+		vec3 specularTerm = vec3(0.f, 0.f, 0.f);
+		vec3 R = reflect(V, N);
+		float RdotL = dot(R, L);
+		if (RdotL > 0){
+			specularTerm = pow(RdotL, shininess) * SpecularI * specularConstant;
+		}
+
+		out_Colour.xyz = (ambientTerm + diffuseTerm + specularTerm) * ex_Colour;
 	}
+
+	out_Colour.a = 1.0f;
 };
